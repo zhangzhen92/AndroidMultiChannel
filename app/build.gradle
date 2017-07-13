@@ -1,0 +1,99 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "26.0.0"
+
+    defaultConfig {
+        applicationId "com.example.zz.umengdemo"
+        minSdkVersion 15
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true                                            //突破方法数65536
+        manifestPlaceholders = [UMENG_CHANNEL_VALUE:"umeng"]
+    }
+
+
+    signingConfigs {
+        release{
+            storeFile file("umeng.jks")
+            storePassword "123456"
+            keyAlias "umeng"
+            keyPassword "123456"
+        }
+        debug {
+            storeFile file('umeng.jks')
+            storePassword "123456"
+            keyAlias "umeng"
+            keyPassword "123456"
+        }
+    }
+
+    buildTypes {
+        debug{
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            //为每个正式的包重新命名为渠道名称
+            applicationVariants.all{ variant ->
+                 variant.outputs.each{ output->
+                    def outFile = output.outputFile
+                     if(outFile != null && (output.outputFile.name).endsWith(".apk")){
+                        def fileName = "${variant.productFlavors[0].name}"+".apk";
+                        output.outputFile = new File(outFile.parent,fileName);
+                     }
+                 }
+
+            }
+        }
+    }
+//替换友盟的channel_id 为渠道的名称    (多渠道打包可以在 Terminal 中使用gradlew assembleRelease进行打包，或者assemblewandoujiaRelease  只打固定渠道的包)
+  productFlavors{
+      //--------------------------------手动添加----------------------------------------------------------------
+//      xiaomi{
+//          manifestPlaceholders = [UMENG_CHANNEL_VALUE: "xiaomi"]
+//          resValue("string","app_name","xiaomi" )                     //可以将小米渠道的app名称改为小米(此时可以将string的xml中定义的app_name注释掉，否则会出现资源重复的错误)
+//      }
+//      wandoujia{
+//          manifestPlaceholders = [UMENG_CHANNEL_VALUE: "wandoujia"]
+//      }
+
+//----------------------------------------------------------------------------------------------------------------------
+
+
+      //------------------------------快捷操作---------------------------------
+      xiaomi{}
+      "360"{}
+      huawei{}
+      //----------------------------------------------------------------------
+
+      //-----------------------打指定功能的测试包，可同时安装---------------------------
+          baidumap{
+              applicationIdSuffix "baidumap"              //在applicationId 后面自动拼接 -baidumap
+          }
+         jpush{
+             applicationIdSuffix "jpush"
+         }
+      //-----------------------打指定功能的测试包，可同时安装---------------------------
+  }
+
+    //快捷操作
+    productFlavors.all{
+        flavor -> flavor.manifestPlaceholders = [UMENG_CHANNEL_VALUE: name]
+    }
+
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:25.3.1'
+    compile 'com.umeng.analytics:analytics:latest.integration'
+}
